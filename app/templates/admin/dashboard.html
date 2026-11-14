@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Control Center – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <!-- Main Dashboard View -->
+        <div class="col-lg-10 col-md-9">
+            <!-- Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Administrative Center</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Platform Overview</h3>
+                    <p class="text-muted small mb-0">University property protection and recovery administration portal</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ url_for('admin.trigger_matching') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-outline-sage btn-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i> Recalculate AI Matches
+                        </button>
+                    </form>
+                    <a href="{{ url_for('analytics.export_csv') }}" class="btn btn-sage btn-sm">
+                        <i class="bi bi-download me-1"></i> Export Data
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quantitative KPI Metric Cards (Coordinated 4 Accents) -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card stat-mustard">
+                        <div class="stat-header">
+                            <span class="stat-label">Pending Approvals</span>
+                            <div class="stat-icon">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                        </div>
+                        <div class="stat-number">{{ pending_approvals }}</div>
+                        <p class="stat-desc"><a href="{{ url_for('admin.reports', status='pending_review') }}" style="color: var(--brand-primary);">Review queue <i class="bi bi-arrow-right"></i></a></p>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card stat-slate">
+                        <div class="stat-header">
+                            <span class="stat-label">Active Claims</span>
+                            <div class="stat-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                        </div>
+                        <div class="stat-number">{{ active_claims }}</div>
+                        <p class="stat-desc"><a href="{{ url_for('admin.claims') }}" style="color: var(--brand-primary);">View claims <i class="bi bi-arrow-right"></i></a></p>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card stat-sage">
+                        <div class="stat-header">
+                            <span class="stat-label">Verified Recoveries</span>
+                            <div class="stat-icon">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-number">{{ successful_recoveries }}</div>
+                        <p class="stat-desc">Recovery rate: <strong>{{ recovery_rate }}%</strong></p>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="stat-card stat-terracotta">
+                        <div class="stat-header">
+                            <span class="stat-label">Total Users</span>
+                            <div class="stat-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
+                        <div class="stat-number">{{ total_users }}</div>
+                        <p class="stat-desc">Total Reports: <strong>{{ total_lost + total_found }}</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Reports by Category: Lost vs Found</h6>
+                        <canvas id="categoryChart" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Ownership Claims Distribution</h6>
+                        <canvas id="claimsChart" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Awaiting Review Section -->
+            <div class="card border mb-4" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom" style="background-color: var(--bg-tertiary); border-color: var(--border-color) !important;">
+                    <span class="fw-bold" style="color: var(--brand-secondary);"><i class="bi bi-clock-history me-1" style="color: var(--highlight);"></i> Reports Awaiting Administrative Approval</span>
+                    <a href="{{ url_for('admin.reports', status='pending_review') }}" class="btn btn-outline-slate btn-sm">Full Queue</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Report Code</th>
+                                <th>Item Title</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Reporter</th>
+                                <th class="text-end">Fast Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in pending_lost %}
+                                <tr>
+                                    <td><span class="badge-status badge-lost d-inline-block position-static">LOST</span></td>
+                                    <td><span class="fw-bold" style="color: var(--brand-secondary);">{{ r.report_code }}</span></td>
+                                    <td>{{ r.item_name }}</td>
+                                    <td><span class="badge-pill-soft">{{ r.category.category_name if r.category else 'N/A' }}</span></td>
+                                    <td>{{ r.location.location_name if r.location else 'Campus' }}</td>
+                                    <td>{{ r.reporter.full_name }}</td>
+                                    <td class="text-end text-nowrap">
+                                        <form method="POST" action="{{ url_for('admin.approve_report', rtype='lost', id=r.id) }}" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-xs btn-sage py-1 px-2" title="Approve">
+                                                <i class="bi bi-check-lg"></i> Approve
+                                            </button>
+                                        </form>
+                                        <a href="{{ url_for('reports.view_lost', id=r.id) }}" class="btn btn-xs btn-outline-warm py-1 px-2">Inspect</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% for f in pending_found %}
+                                <tr>
+                                    <td><span class="badge-status badge-found d-inline-block position-static">FOUND</span></td>
+                                    <td><span class="fw-bold" style="color: var(--brand-secondary);">{{ f.report_code }}</span></td>
+                                    <td>{{ f.item_name }}</td>
+                                    <td><span class="badge-pill-soft">{{ f.category.category_name if f.category else 'N/A' }}</span></td>
+                                    <td>{{ f.location.location_name if f.location else 'Campus' }}</td>
+                                    <td>{{ f.finder.full_name }}</td>
+                                    <td class="text-end text-nowrap">
+                                        <form method="POST" action="{{ url_for('admin.approve_report', rtype='found', id=f.id) }}" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-xs btn-sage py-1 px-2" title="Approve">
+                                                <i class="bi bi-check-lg"></i> Approve
+                                            </button>
+                                        </form>
+                                        <a href="{{ url_for('reports.view_found', id=f.id) }}" class="btn btn-xs btn-outline-warm py-1 px-2">Inspect</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% if not pending_lost and not pending_found %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-check2-all fs-3 d-block mb-1" style="color: var(--brand-primary);"></i>
+                                        All submitted reports have been reviewed!
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="admin-dashboard-data" type="application/json">
+{
+    "catLabels": {{ cat_labels|tojson|safe }},
+    "catLostCounts": {{ cat_lost_counts|tojson|safe }},
+    "catFoundCounts": {{ cat_found_counts|tojson|safe }},
+    "claimStatuses": {{ claim_statuses|tojson|safe }},
+    "claimCounts": {{ claim_counts|tojson|safe }}
+}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dataElement = document.getElementById('admin-dashboard-data');
+        const dashData = dataElement ? JSON.parse(dataElement.textContent) : {};
+        const catLabels = dashData.catLabels || [];
+        const catLostCounts = dashData.catLostCounts || [];
+        const catFoundCounts = dashData.catFoundCounts || [];
+        const claimStatuses = dashData.claimStatuses || [];
+        const claimCounts = dashData.claimCounts || [];
+
+        // Coordinated Palette Category Chart
+        const catCanvas = document.getElementById('categoryChart');
+        if (catCanvas) {
+            new Chart(catCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: catLabels,
+                    datasets: [
+                        {
+                            label: 'Lost Reports',
+                            data: catLostCounts,
+                            backgroundColor: '#D98C68'
+                        },
+                        {
+                            label: 'Found Reports',
+                            data: catFoundCounts,
+                            backgroundColor: '#4F7C72'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { maxRotation: 45, minRotation: 0 } },
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        // Coordinated Palette Claims Distribution Chart
+        const claimCanvas = document.getElementById('claimsChart');
+        if (claimCanvas) {
+            new Chart(claimCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: claimStatuses,
+                    datasets: [{
+                        data: claimCounts,
+                        backgroundColor: ['#243B53', '#4F7C72', '#D98C68', '#E9C46A', '#E8DDD1', '#5D6A78', '#39434D']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

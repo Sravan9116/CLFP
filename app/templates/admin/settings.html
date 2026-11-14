@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Configuration</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">System Configuration</h3>
+                    <p class="text-muted small mb-0">Campus security policies, domain allowlists, and system-wide settings</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h5 class="fw-bold mb-3" style="color: var(--brand-secondary);">Institutional Email Domain Allowlist</h5>
+                        <p class="text-muted small mb-3">
+                            Enforce registration strictly to authorized university email domains. Separate multiple allowed domains with commas. Enter <code>*</code> to permit any domain during testing.
+                        </p>
+
+                        <form method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                            <div class="mb-3">
+                                <label class="form-label">Allowed Email Domains (Comma-separated) *</label>
+                                <textarea class="form-control font-monospace" name="email_domains" rows="3" required>{{ domains }}</textarea>
+                                <div class="form-text small" style="color: var(--text-muted);">e.g. campusconnect.edu, student.campusconnect.edu, faculty.campusconnect.edu</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-sage btn-sm px-4">
+                                Save Domain Allowlist
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">System Architecture</h6>
+                        <ul class="list-unstyled small d-flex flex-column gap-2 text-muted mb-0">
+                            <li>Application: <strong>CampusConnect Portal</strong></li>
+                            <li>Version: <strong>2.0.0 (Production-Grade)</strong></li>
+                            <li>Engine: <strong>Python 3.13 / Flask / PostgreSQL / SQLAlchemy</strong></li>
+                            <li>Algorithm: <strong>v1.2-tfidf (Multi-Attribute Cosine)</strong></li>
+                            <li>WebSockets: <strong>Flask-SocketIO</strong></li>
+                            <li>Session Mode: <strong>Secure HTTP-Only Cookies</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

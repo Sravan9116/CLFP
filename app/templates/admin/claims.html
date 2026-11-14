@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Claims – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Administrative Verification</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Ownership Claims & Verification</h3>
+                    <p class="text-muted small mb-0">Evaluate evidence, approve recoveries, and coordinate item handovers</p>
+                </div>
+            </div>
+
+            <!-- Status Filter Badges -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <a href="{{ url_for('admin.claims', status='all') }}" class="btn btn-sm {{ 'btn-slate' if status == 'all' else 'btn-outline-warm' }}">All Claims</a>
+                <a href="{{ url_for('admin.claims', status='submitted') }}" class="btn btn-sm {{ 'btn-slate' if status == 'submitted' else 'btn-outline-warm' }}">Submitted</a>
+                <a href="{{ url_for('admin.claims', status='under_review') }}" class="btn btn-sm {{ 'btn-sage' if status == 'under_review' else 'btn-outline-warm' }}">Under Review</a>
+                <a href="{{ url_for('admin.claims', status='evidence_required') }}" class="btn btn-sm {{ 'btn-mustard' if status == 'evidence_required' else 'btn-outline-warm' }}">Evidence Needed</a>
+                <a href="{{ url_for('admin.claims', status='approved') }}" class="btn btn-sm {{ 'btn-sage' if status == 'approved' else 'btn-outline-warm' }}">Approved</a>
+                <a href="{{ url_for('admin.claims', status='handover_scheduled') }}" class="btn btn-sm {{ 'btn-slate' if status == 'handover_scheduled' else 'btn-outline-warm' }}">Handover Scheduled</a>
+                <a href="{{ url_for('admin.claims', status='returned') }}" class="btn btn-sm {{ 'btn-sage' if status == 'returned' else 'btn-outline-warm' }}">Returned</a>
+            </div>
+
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Claimant</th>
+                                <th>Found Belonging</th>
+                                <th>Date Submitted</th>
+                                <th>Status</th>
+                                <th>Handover Details</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in claims %}
+                                <tr>
+                                    <td><strong style="color: var(--brand-primary);">{{ c.claim_code }}</strong></td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ c.claimant.full_name }}</div>
+                                        <div class="small text-muted">{{ c.claimant.institutional_id }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ c.found_report.item_name }}</div>
+                                        <div class="small text-muted">{{ c.found_report.report_code }}</div>
+                                    </td>
+                                    <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge {{ c.status_badge_class }}">
+                                            {{ c.claim_status|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if c.handover %}
+                                            <div class="small">
+                                                <strong>{{ c.handover.location.location_name if c.handover.location else 'Campus Security HQ' }}</strong><br/>
+                                                <span class="text-muted">{{ c.handover.scheduled_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                            </div>
+                                            <span class="badge {{ c.handover.status_badge_class }}" style="font-size: 0.65rem;">
+                                                {{ c.handover.handover_status|replace('_', ' ')|upper }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted small">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('admin.view_claim', id=c.id) }}" class="btn btn-sm btn-sage me-1">
+                                            Review Evidence
+                                        </a>
+                                        <a href="{{ url_for('messages.claim_conversation', claim_id=c.id) }}" class="btn btn-sm btn-outline-warm" title="Messages">
+                                            <i class="bi bi-chat-dots"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        No claims found in this status.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

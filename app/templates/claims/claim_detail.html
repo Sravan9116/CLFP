@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Claim {{ claim.claim_code }} – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color: var(--brand-primary);">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('claims.my_claims') }}" style="color: var(--brand-primary);">My Claims</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">{{ claim.claim_code }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge {{ claim.status_badge_class }} px-3 py-1 fw-bold">
+                    {{ claim.claim_status|replace('_', ' ')|upper }}
+                </span>
+                <span class="text-muted small">Submitted on {{ claim.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+            </div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Claim {{ claim.claim_code }}</h3>
+            <div class="small text-muted">
+                Belonging: <strong>{{ claim.found_report.item_name }}</strong> ({{ claim.found_report.report_code }})
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            <a href="{{ url_for('messages.claim_conversation', claim_id=claim.id) }}" class="btn btn-sage btn-sm px-3">
+                <i class="bi bi-chat-dots me-1"></i> Messages with Administration
+            </a>
+            {% if claim.claim_status not in ['returned', 'cancelled'] %}
+                <form method="POST" action="{{ url_for('claims.cancel_claim', id=claim.id) }}" class="d-inline" onsubmit="return confirm('Cancel this claim?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-outline-terracotta btn-sm">Cancel Claim</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Handover Details Card if Scheduled -->
+    {% if claim.handover %}
+        <div class="card p-4 mb-4 border border-start-4" style="background-color: var(--card-bg); border-color: var(--border-color); border-left-color: {{ 'var(--brand-primary)' if claim.handover.handover_status == 'completed' else 'var(--brand-secondary)' }} !important; border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+            <div class="row align-items-center g-4">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge {{ claim.handover.status_badge_class }}">{{ claim.handover.handover_status|replace('_', ' ')|upper }}</span>
+                        <span class="fw-bold" style="color: var(--brand-secondary);">Recovery Code: {{ claim.handover.recovery_code }}</span>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--brand-secondary);">Physical Campus Handover Appointment</h5>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-geo-alt me-1" style="color: var(--accent);"></i> <strong>Location:</strong> {{ claim.handover.location.location_name if claim.handover.location else 'Campus Security HQ' }}<br/>
+                        <i class="bi bi-calendar-check me-1" style="color: var(--brand-primary);"></i> <strong>Scheduled:</strong> {{ claim.handover.scheduled_at.strftime('%A, %B %d, %Y at %I:%M %p') }}
+                    </p>
+
+                    {% if claim.handover.notes %}
+                        <div class="p-2 rounded-2 small text-muted mb-3 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                            <strong>Admin Notes:</strong> {{ claim.handover.notes }}
+                        </div>
+                    {% endif %}
+
+                    {% if not claim.handover.claimant_confirmed and claim.handover.handover_status == 'scheduled' %}
+                        <form method="POST" action="{{ url_for('handovers.confirm', id=claim.handover.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-sage btn-sm px-4">
+                                <i class="bi bi-check-circle me-1"></i> Confirm Appointment Availability
+                            </button>
+                        </form>
+                    {% elif claim.handover.claimant_confirmed and claim.handover.handover_status != 'completed' %}
+                        <div class="small fw-semibold" style="color: var(--brand-primary);">
+                            <i class="bi bi-check2-circle me-1"></i> You confirmed this appointment. Please bring your student/staff photo ID to the handover point.
+                        </div>
+                    {% endif %}
+
+                    {% if claim.handover.handover_status == 'completed' %}
+                        <div class="mt-2">
+                            <a href="{{ url_for('handovers.download_receipt', id=claim.handover.id) }}" class="btn btn-sage btn-sm px-3">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Download Official Recovery Receipt (PDF)
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 text-center border-start" style="border-color: var(--border-subtle) !important;">
+                    {% if claim.handover.qr_code_path %}
+                        <img src="{{ url_for('static', filename=claim.handover.qr_code_path) }}" alt="QR Code" class="img-thumbnail mb-2" style="width: 140px; height: 140px; border-color: var(--border-color);">
+                        <div class="small text-muted">Scan to Verify Record</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Claimant Evidence -->
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <h5 class="fw-bold mb-3" style="color: var(--brand-secondary);">Ownership Verification Details</h5>
+
+                <div class="mb-4">
+                    <label class="small fw-bold text-muted text-uppercase">Claimant Statement</label>
+                    <p class="p-3 rounded-2 small mb-0 border" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary);">{{ claim.ownership_description }}</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="small fw-bold text-muted text-uppercase">Confidential Identifying Answers</label>
+                    <p class="p-3 rounded-2 small mb-0 border" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary);">{{ claim.identifying_answers }}</p>
+                </div>
+
+                {% if claim.evidence_path %}
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted text-uppercase mb-2">Supporting Proof / Attachment</label>
+                        <div>
+                            {% if claim.evidence_path.endswith('.pdf') %}
+                                <a href="{{ url_for('static', filename=claim.evidence_path) }}" target="_blank" class="btn btn-outline-sage btn-sm">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> View Attached PDF Document
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('static', filename=claim.evidence_path) }}" target="_blank">
+                                    <img src="{{ url_for('static', filename=claim.evidence_path) }}" alt="Proof" class="img-thumbnail" style="max-height: 220px; border-color: var(--border-color);">
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Request Evidence prompt if status is evidence_required -->
+                {% if claim.claim_status == 'evidence_required' %}
+                    <div class="alert alert-warning p-3 mt-3">
+                        <h6 class="fw-bold mb-1" style="color: var(--brand-secondary);"><i class="bi bi-exclamation-triangle me-1" style="color: var(--highlight);"></i> Additional Evidence Requested by Administrator</h6>
+                        <p class="small text-muted mb-3">{{ claim.review_notes or 'Please upload a purchase receipt or serial number proof.' }}</p>
+                        
+                        <form method="POST" action="{{ url_for('claims.upload_evidence', id=claim.id) }}" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="input-group">
+                                <input type="file" class="form-control" name="additional_evidence" accept="image/jpeg,image/png,application/pdf" required>
+                                <button type="submit" class="btn btn-mustard">Upload Evidence</button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if claim.rejection_reason %}
+                    <div class="alert alert-danger p-3 mt-3">
+                        <strong style="color: var(--accent);">Claim Rejection Reason:</strong>
+                        <div class="small mt-1">{{ claim.rejection_reason }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Found Item Info -->
+        <div class="col-lg-4">
+            <div class="card p-4 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Item Claimed</h6>
+
+                {% if claim.found_report.image_path %}
+                    <img src="{{ url_for('static', filename=claim.found_report.image_path) }}" alt="{{ claim.found_report.item_name }}" class="img-fluid rounded-2 mb-3 border" style="max-height: 180px; width: 100%; object-fit: cover; border-color: var(--border-color);">
+                {% endif %}
+
+                <h6 class="fw-bold mb-1" style="color: var(--brand-secondary);">{{ claim.found_report.item_name }}</h6>
+                <div class="small text-muted mb-3">{{ claim.found_report.report_code }}</div>
+
+                <ul class="list-unstyled d-flex flex-column gap-2 small text-muted mb-3">
+                    <li><i class="bi bi-tag me-1"></i> Category: <strong>{{ claim.found_report.category.category_name if claim.found_report.category else 'N/A' }}</strong></li>
+                    <li><i class="bi bi-geo-alt me-1"></i> Found at: <strong>{{ claim.found_report.location.location_name if claim.found_report.location else 'Campus' }}</strong></li>
+                    <li><i class="bi bi-calendar3 me-1"></i> Date Found: <strong>{{ claim.found_report.date_found }}</strong></li>
+                    <li><i class="bi bi-box me-1"></i> Custody: <strong>{{ claim.found_report.custody_status|replace('_', ' ')|title }}</strong></li>
+                </ul>
+
+                <a href="{{ url_for('reports.view_found', id=claim.found_report.id) }}" class="btn btn-outline-warm btn-sm w-100">
+                    View Public Found Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

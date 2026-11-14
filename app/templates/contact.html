@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Support – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="text-center mb-4">
+                    <div class="editorial-eyebrow mb-1">Assistance & Inquiries</div>
+                    <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Campus Recovery Helpdesk</h3>
+                    <p class="text-muted small">Need assistance finding a belonging or reporting a sensitive item?</p>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 rounded-2 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                            <i class="bi bi-geo-alt fs-3 d-block mb-1" style="color: var(--brand-primary);"></i>
+                            <strong class="d-block text-dark small">Security HQ</strong>
+                            <span class="text-muted small">Central Block, Room 102</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 rounded-2 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                            <i class="bi bi-clock fs-3 d-block mb-1" style="color: var(--brand-secondary);"></i>
+                            <strong class="d-block text-dark small">Operating Hours</strong>
+                            <span class="text-muted small">Mon–Fri: 9:00 – 17:00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 rounded-2 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                            <i class="bi bi-telephone fs-3 d-block mb-1" style="color: var(--accent);"></i>
+                            <strong class="d-block text-dark small">Phone Helpline</strong>
+                            <span class="text-muted small">+1 (555) 019-2834</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" name="name" value="{{ current_user.full_name if current_user.is_authenticated else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">University Email *</label>
+                            <input type="email" class="form-control" name="email" value="{{ current_user.email if current_user.is_authenticated else '' }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Subject *</label>
+                            <input type="text" class="form-control" name="subject" placeholder="e.g. Urgent inquiry regarding lost laptop in library" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Message *</label>
+                            <textarea class="form-control" name="message" rows="4" placeholder="Detail your question or concern..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-sage px-4">
+                            Send Message <i class="bi bi-send ms-1"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

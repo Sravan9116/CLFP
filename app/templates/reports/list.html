@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Lost & Found Belongings – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <div class="editorial-eyebrow mb-1">Campus Registry</div>
+            <h2 class="fw-bold mb-1" style="color: var(--brand-secondary);">Campus Belongings Catalog</h2>
+            <p class="text-muted small mb-0">Search and discover lost or found items across all university sectors</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('reports.report_lost') }}" class="btn btn-terracotta btn-sm px-3">
+                <i class="bi bi-search me-1"></i> Report Lost
+            </a>
+            <a href="{{ url_for('reports.report_found') }}" class="btn btn-sage btn-sm px-3">
+                <i class="bi bi-box-seam me-1"></i> Report Found
+            </a>
+        </div>
+    </div>
+
+    <!-- Discovery Main Tabs -->
+    <ul class="nav nav-tabs nav-tabs-editorial mb-4">
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'all' }}" href="{{ url_for('reports.index', tab='all', q=q, category=selected_category, location=selected_location) }}">
+                <i class="bi bi-grid me-1"></i> All Items
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'lost' }}" href="{{ url_for('reports.index', tab='lost', q=q, category=selected_category, location=selected_location) }}">
+                <i class="bi bi-search me-1 text-danger"></i> Lost Items
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'found' }}" href="{{ url_for('reports.index', tab='found', q=q, category=selected_category, location=selected_location) }}">
+                <i class="bi bi-box-seam me-1 text-success"></i> Found Items
+            </a>
+        </li>
+        {% if current_user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if tab == 'my_reports' }}" href="{{ url_for('reports.index', tab='my_reports') }}">
+                    <i class="bi bi-person me-1"></i> My Reports ({{ user_lost_count + user_found_count }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if tab == 'matches' }}" href="{{ url_for('reports.index', tab='matches') }}">
+                    <i class="bi bi-cpu me-1" style="color: var(--brand-primary);"></i> Potential Matches
+                    {% if potential_matches_count > 0 %}
+                        <span class="badge ms-1" style="background-color: var(--accent); color: #fff;">{{ potential_matches_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <!-- Search & Filter Card -->
+    <div class="card p-3 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+        <form method="GET" action="{{ url_for('reports.index') }}">
+            <input type="hidden" name="tab" value="{{ tab }}"/>
+
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Search title, brand, description, report code...">
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        {% for c in categories %}
+                            <option value="{{ c.id }}" {{ 'selected' if selected_category == c.id|string }}>{{ c.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <select class="form-select" name="location">
+                        <option value="">All Locations</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc.id }}" {{ 'selected' if selected_location == loc.id|string }}>{{ loc.location_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <input type="text" class="form-control" name="color" value="{{ selected_color }}" placeholder="Color (e.g. Black)">
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6">
+                    <select class="form-select" name="sort">
+                        <option value="latest" {{ 'selected' if sort_by == 'latest' }}>Latest First</option>
+                        <option value="oldest" {{ 'selected' if sort_by == 'oldest' }}>Oldest First</option>
+                        <option value="name" {{ 'selected' if sort_by == 'name' }}>Alphabetical</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top" style="border-color: var(--border-subtle) !important;">
+                <div class="small text-muted d-flex align-items-center gap-1">
+                    <span>Date range:</span>
+                    <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm d-inline-block w-auto mx-1">
+                    <span>to</span>
+                    <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm d-inline-block w-auto mx-1">
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('reports.index', tab=tab) }}" class="btn btn-outline-warm btn-sm">Reset</a>
+                    <button type="submit" class="btn btn-sage btn-sm px-3">Filter Catalog</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Grid / List -->
+    {% if tab == 'matches' %}
+        <!-- Matches Tab View -->
+        <div class="row g-4">
+            {% for m in items %}
+                <div class="col-lg-6">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="match-score-pill {{ 'match-high' if m.match_score >= 80 else 'match-medium' if m.match_score >= 50 else 'match-low' }}">
+                                <i class="bi bi-stars"></i> {{ m.match_score }}% Match ({{ m.classification }})
+                            </span>
+                            <span class="small text-muted">{{ m.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6 border-end" style="border-color: var(--border-subtle) !important;">
+                                <span class="badge-status badge-lost d-inline-block position-static mb-1">YOUR LOST ITEM</span>
+                                <h6 class="fw-bold mb-1" style="color: var(--brand-secondary);">{{ m.lost_report.item_name }}</h6>
+                                <div class="small text-muted">{{ m.lost_report.report_code }}</div>
+                                <div class="small text-muted mt-1"><i class="bi bi-geo-alt" style="color: var(--brand-primary);"></i> {{ m.lost_report.location.location_name }}</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="badge-status badge-found d-inline-block position-static mb-1">FOUND MATCH</span>
+                                <h6 class="fw-bold mb-1" style="color: var(--brand-secondary);">{{ m.found_report.item_name }}</h6>
+                                <div class="small text-muted">{{ m.found_report.report_code }}</div>
+                                <div class="small text-muted mt-1"><i class="bi bi-geo-alt" style="color: var(--brand-primary);"></i> {{ m.found_report.location.location_name }}</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-2 small mb-3 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                            <strong style="color: var(--brand-secondary);">Matching Explanation:</strong><br/>
+                            <span class="text-muted">{{ m.match_explanation }}</span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('reports.view_found', id=m.found_report_id) }}" class="btn btn-outline-slate btn-sm flex-grow-1">
+                                View Details
+                            </a>
+                            <a href="{{ url_for('claims.submit', found_report_id=m.found_report_id) }}" class="btn btn-sage btn-sm flex-grow-1">
+                                <i class="bi bi-shield-check me-1"></i> Submit Claim
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-cpu fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                    <h5 class="fw-bold" style="color: var(--brand-secondary);">No Current Potential Matches</h5>
+                    <p class="text-muted small">Our algorithm automatically pairs reported lost items with found belongings.</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Standard Catalog Grid -->
+        <div class="row g-4">
+            {% for item in items %}
+                {% set is_lost = (item.__class__.__name__ == 'LostReport') %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card-item">
+                        <div class="item-thumb-wrapper">
+                            <span class="badge-status {{ 'badge-lost' if is_lost else 'badge-found' }}">
+                                {{ 'LOST' if is_lost else 'FOUND' }}
+                            </span>
+                            {% if item.image_path %}
+                                <img src="{{ url_for('static', filename=item.image_path) }}" alt="{{ item.item_name }}" class="item-thumb-img">
+                            {% else %}
+                                <div class="text-center p-3 text-muted">
+                                    <i class="bi {{ item.category.icon_class if item.category else 'bi-box' }} fs-1 opacity-50" style="color: var(--text-muted);"></i>
+                                    <div class="small mt-1">Photo on File</div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge-pill-soft">{{ item.category.category_name if item.category else 'General' }}</span>
+                                <span class="text-muted small" style="font-size: 0.75rem;">{{ item.report_code }}</span>
+                            </div>
+                            
+                            <h5 class="fw-bold mb-1 text-truncate" title="{{ item.item_name }}" style="color: var(--brand-secondary); font-size: 1.05rem;">
+                                {{ item.item_name }}
+                            </h5>
+                            
+                            <p class="text-muted small mb-3 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em;">
+                                {{ item.description }}
+                            </p>
+
+                            <div class="small text-muted mb-3 d-flex flex-column gap-1">
+                                <div><i class="bi bi-geo-alt me-1" style="color: var(--brand-primary);"></i> {{ item.location.location_name if item.location else 'Campus Grounds' }}</div>
+                                <div><i class="bi bi-calendar3 me-1"></i> {{ 'Lost:' if is_lost else 'Found:' }} {{ item.date_lost if is_lost else item.date_found }}</div>
+                                <div><i class="bi bi-palette me-1"></i> Color: {{ item.primary_color }}</div>
+                            </div>
+
+                            <a href="{{ url_for('reports.view_lost' if is_lost else 'reports.view_found', id=item.id) }}" class="btn btn-outline-sage btn-sm w-100">
+                                View Details <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-search fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                    <h5 class="fw-bold" style="color: var(--brand-secondary);">No matching items found</h5>
+                    <p class="text-muted small">Try adjusting your keyword search, category, or location filters.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination and pagination.pages > 1 %}
+            <nav class="mt-5" aria-label="Catalog pages">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+                        <a class="page-link" href="{{ url_for('reports.index', tab=tab, page=pagination.prev_num, q=q, category=selected_category, location=selected_location, sort=sort_by) }}" style="color: var(--brand-secondary);">Previous</a>
+                    </li>
+                    {% for p in range(1, pagination.pages + 1) %}
+                        {% if p >= pagination.page - 2 and p <= pagination.page + 2 %}
+                            <li class="page-item {{ 'active' if p == pagination.page }}">
+                                <a class="page-link" href="{{ url_for('reports.index', tab=tab, page=p, q=q, category=selected_category, location=selected_location, sort=sort_by) }}" style="{{ 'background-color: var(--brand-primary); border-color: var(--brand-primary); color: #fff;' if p == pagination.page else 'color: var(--brand-secondary);' }}">{{ p }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+                        <a class="page-link" href="{{ url_for('reports.index', tab=tab, page=pagination.next_num, q=q, category=selected_category, location=selected_location, sort=sort_by) }}" style="color: var(--brand-secondary);">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

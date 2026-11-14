@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation: Claim {{ claim.claim_code }} – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color: var(--brand-primary);">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('messages.index') }}" style="color: var(--brand-primary);">Messages</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Claim {{ claim.claim_code }}</li>
+        </ol>
+    </nav>
+
+    <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+        <!-- Chat Header -->
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="background-color: var(--bg-tertiary); border-color: var(--border-color) !important;">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('messages.index') }}" class="btn btn-outline-warm btn-sm"><i class="bi bi-arrow-left"></i></a>
+                <div>
+                    <h5 class="fw-bold mb-0" style="color: var(--brand-secondary);">Claim {{ claim.claim_code }} Communication</h5>
+                    <span class="small text-muted">
+                        Item: <strong>{{ claim.found_report.item_name }}</strong> • 
+                        Status: <span class="badge {{ claim.status_badge_class }}">{{ claim.claim_status|title }}</span>
+                    </span>
+                </div>
+            </div>
+            <a href="{{ url_for('claims.view_claim', id=claim.id) }}" class="btn btn-outline-slate btn-sm">
+                View Claim Details
+            </a>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages-container" class="p-4" style="height: 480px; overflow-y: auto; background-color: var(--bg-primary);">
+            {% for msg in messages %}
+                {% set is_mine = (msg.sender_id == current_user.id) %}
+                <div class="{{ 'text-end mb-3' if is_mine else 'text-start mb-3' }}">
+                    <div style="max-width: 75%;" class="{{ 'chat-bubble-sent d-inline-block text-start' if is_mine else 'chat-bubble-received d-inline-block text-start shadow-sm' }}">
+                        <div class="fw-bold small mb-1 {{ 'text-white-50' if is_mine else 'text-muted' }}" style="font-size: 0.78rem;">
+                            {{ msg.sender.full_name }} ({{ msg.sender.role|upper }})
+                        </div>
+                        <div style="font-size: 0.93rem;">{{ msg.message_text }}</div>
+                        {% if msg.attachment_path %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('static', filename=msg.attachment_path) }}" target="_blank" class="btn btn-sm {{ 'btn-outline-warm' if is_mine else 'btn-outline-sage' }}">
+                                    <i class="bi bi-paperclip"></i> View Attachment
+                                </a>
+                            </div>
+                        {% endif %}
+                        <div class="text-end small mt-1 {{ 'text-white-50' if is_mine else 'text-muted' }}" style="font-size: 0.72rem;">
+                            {{ msg.created_at.strftime('%b %d, %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-chat-square-dots fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                    <p class="small mb-0">No messages yet. Send a message to coordinate verification or handover details.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-3 border-top bg-white" style="border-color: var(--border-color) !important;">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div class="input-group">
+                    <input type="text" class="form-control" name="message_text" placeholder="Type instructions, questions, or clarification..." required autofocus>
+                    <input type="file" class="d-none" id="attachment" name="attachment" accept="image/*,application/pdf">
+                    <button type="button" class="btn btn-outline-warm" onclick="document.getElementById('attachment').click();" title="Add Attachment">
+                        <i class="bi bi-paperclip"></i>
+                    </button>
+                    <button type="submit" class="btn btn-sage px-4">
+                        Send <i class="bi bi-send ms-1"></i>
+                    </button>
+                </div>
+                <div id="attachment-name" class="small text-muted mt-1"></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('chat-messages-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Socket room join
+        if (typeof socket !== 'undefined' && socket) {
+            socket.emit('join_claim', { claim_id: {{ claim.id }} });
+        }
+
+        const attachInput = document.getElementById('attachment');
+        const attachName = document.getElementById('attachment-name');
+        if (attachInput && attachName) {
+            attachInput.addEventListener('change', () => {
+                if (attachInput.files.length > 0) {
+                    attachName.textContent = 'Selected: ' + attachInput.files[0].name;
+                } else {
+                    attachName.textContent = '';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

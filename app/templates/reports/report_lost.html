@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Report Lost Belonging – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3" style="border-color: var(--border-color) !important;">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-2" style="width: 48px; height: 48px; background-color: var(--accent-light); color: var(--accent); border: 1px solid rgba(217, 140, 104, 0.2);">
+                        <i class="bi bi-search fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="editorial-eyebrow mb-1">Incident Report</div>
+                        <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Report a Lost Belonging</h3>
+                        <p class="text-muted small mb-0">Provide details to help find and match your lost item across campus grounds.</p>
+                    </div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="item_name" class="form-label">Item Title / Name *</label>
+                            <input type="text" class="form-control" id="item_name" name="item_name" placeholder="e.g. Black Leather Bellroy Wallet" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="category_id" class="form-label">Category *</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="">-- Select Category --</option>
+                                {% for c in categories %}
+                                    <option value="{{ c.id }}">{{ c.category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="description" class="form-label">Detailed Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe the item's appearance, size, markings, and condition." required></textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="brand" class="form-label">Brand / Manufacturer (Optional)</label>
+                            <input type="text" class="form-control" id="brand" name="brand" placeholder="e.g. Apple, Sony, Herschel">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="primary_color" class="form-label">Primary Color *</label>
+                            <input type="text" class="form-control" id="primary_color" name="primary_color" placeholder="e.g. Black, Navy, Silver" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="secondary_color" class="form-label">Secondary Color (Optional)</label>
+                            <input type="text" class="form-control" id="secondary_color" name="secondary_color" placeholder="e.g. White trim, Gold zipper">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="date_lost" class="form-label">Date Lost *</label>
+                            <input type="date" class="form-control" id="date_lost" name="date_lost" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="approximate_time" class="form-label">Approximate Time</label>
+                            <input type="text" class="form-control" id="approximate_time" name="approximate_time" placeholder="e.g. Around 2:30 PM, Morning lecture">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="location_id" class="form-label">Campus Location *</label>
+                            <select class="form-select" id="location_id" name="location_id" required>
+                                <option value="">-- Select Recognized Campus Building --</option>
+                                {% for loc in locations %}
+                                    <option value="{{ loc.id }}">{{ loc.location_name }} ({{ loc.location_category }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="additional_location" class="form-label">Specific Area / Room</label>
+                            <input type="text" class="form-control" id="additional_location" name="additional_location" placeholder="e.g. 2nd Floor Silent Reading Area, Room 304">
+                        </div>
+
+                        <!-- Image Upload with Preview -->
+                        <div class="col-12">
+                            <label class="form-label">Upload Photograph (JPG, PNG, WEBP max 16MB)</label>
+                            <input type="file" class="form-control" id="image-upload-input" name="image" accept="image/jpeg,image/png,image/webp">
+                            <div id="image-preview-container" class="mt-2 d-none position-relative d-inline-block">
+                                <img id="image-preview" src="" alt="Preview" class="img-thumbnail" style="max-height: 200px; border-color: var(--border-color);">
+                                <button type="button" id="remove-image-btn" class="btn btn-sm btn-terracotta position-absolute top-0 end-0 m-1 rounded-circle" style="padding: 2px 6px;">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confidential Identifying Features -->
+                        <div class="col-12">
+                            <div class="p-3 rounded-2 border" style="background-color: var(--accent-light); border-color: rgba(217, 140, 104, 0.3);">
+                                <label for="identifying_features" class="form-label fw-bold mb-1" style="color: var(--accent);">
+                                    <i class="bi bi-shield-lock me-1"></i> Confidential Identifying Characteristics (Never Displayed Publicly)
+                                </label>
+                                <p class="small text-muted mb-2">
+                                    Enter secret characteristics only you would know (e.g. engravings, student cards inside, lockscreen wallpaper, serial numbers). This helps administrators verify your ownership claim safely.
+                                </p>
+                                <textarea class="form-control" id="identifying_features" name="identifying_features" rows="2" placeholder="e.g. Contains student ID card ending in 9041 and 2 keys on a blue carabiner."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="contact_preference" class="form-label">Contact Preference</label>
+                            <select class="form-select" id="contact_preference" name="contact_preference">
+                                <option value="email" selected>University Email</option>
+                                <option value="phone">Phone Call / SMS</option>
+                                <option value="portal">CampusConnect Portal Messages</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                        <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-warm px-3">Cancel</a>
+                        <button type="submit" class="btn btn-terracotta px-4">
+                            <i class="bi bi-send me-1"></i> Submit Lost Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

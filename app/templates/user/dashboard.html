@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <div class="editorial-eyebrow mb-1">User Portal</div>
+            <h2 class="fw-bold mb-1" style="color: var(--brand-secondary);">Welcome, {{ current_user.full_name }}</h2>
+            <div class="text-muted small">
+                <span>{{ current_user.user_type|title }}</span> • 
+                <span>{{ current_user.department.department_name if current_user.department else 'University Member' }}</span> • 
+                <span>ID: {{ current_user.institutional_id }}</span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('reports.report_lost') }}" class="btn btn-terracotta btn-sm px-3">
+                <i class="bi bi-search me-1"></i> Report Lost Item
+            </a>
+            <a href="{{ url_for('reports.report_found') }}" class="btn btn-sage btn-sm px-3">
+                <i class="bi bi-box-seam me-1"></i> Report Found Item
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Summary KPI Cards (Sage, Slate, Terracotta, Mustard) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card stat-terracotta">
+                <div class="stat-header">
+                    <span class="stat-label">My Lost Reports</span>
+                    <div class="stat-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ lost_reports|length }}</div>
+                <p class="stat-desc">Belongings you reported misplaced</p>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="stat-card stat-sage">
+                <div class="stat-header">
+                    <span class="stat-label">My Found Reports</span>
+                    <div class="stat-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ found_reports|length }}</div>
+                <p class="stat-desc">Belongings discovered & reported by you</p>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="stat-card stat-slate">
+                <div class="stat-header">
+                    <span class="stat-label">Active Claims</span>
+                    <div class="stat-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ claims|length }}</div>
+                <p class="stat-desc">Ownership claims in review</p>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="stat-card stat-mustard">
+                <div class="stat-header">
+                    <span class="stat-label">Items Recovered</span>
+                    <div class="stat-icon">
+                        <i class="bi bi-patch-check"></i>
+                    </div>
+                </div>
+                <div class="stat-number">{{ recovered_count }}</div>
+                <p class="stat-desc">Completed official handovers</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intelligent Matches Notification Banner -->
+    {% if potential_matches %}
+        <div class="p-3 mb-4 rounded-2 border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3" style="background-color: var(--brand-primary-light); border-color: rgba(79, 124, 114, 0.3);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="fs-2" style="color: var(--brand-primary);"><i class="bi bi-cpu"></i></div>
+                <div>
+                    <strong class="fs-6" style="color: var(--brand-secondary);">Intelligent Matches Detected</strong>
+                    <div class="small text-muted">Our matching engine identified {{ potential_matches|length }} candidate item(s) compatible with your lost belongings.</div>
+                </div>
+            </div>
+            <button class="btn btn-sage btn-sm px-3" onclick="document.getElementById('matches-tab').click();">
+                Review Matches
+            </button>
+        </div>
+    {% endif %}
+
+    <!-- Dashboard Tabs -->
+    <ul class="nav nav-tabs nav-tabs-editorial mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="lost-tab" data-bs-toggle="tab" data-bs-target="#lost-pane" type="button" role="tab">
+                <i class="bi bi-search me-1"></i> My Lost Items ({{ lost_reports|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="found-tab" data-bs-toggle="tab" data-bs-target="#found-pane" type="button" role="tab">
+                <i class="bi bi-box-seam me-1"></i> My Found Reports ({{ found_reports|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="matches-tab" data-bs-toggle="tab" data-bs-target="#matches-pane" type="button" role="tab">
+                <i class="bi bi-cpu me-1"></i> Smart Matches 
+                {% if potential_matches %}
+                    <span class="badge ms-1" style="background-color: var(--accent); color: #fff;">{{ potential_matches|length }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="claims-tab" data-bs-toggle="tab" data-bs-target="#claims-pane" type="button" role="tab">
+                <i class="bi bi-shield-check me-1"></i> My Claims ({{ claims|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages-pane" type="button" role="tab">
+                <i class="bi bi-chat-dots me-1"></i> Messages ({{ conversations|length }})
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="dashboardTabsContent">
+        <!-- 1. My Lost Items -->
+        <div class="tab-pane fade show active" id="lost-pane" role="tabpanel">
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Date Lost</th>
+                                <th>Location</th>
+                                <th>Review Status</th>
+                                <th>Report Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in lost_reports %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--brand-secondary);">{{ r.item_name }}</div>
+                                        <div class="small text-muted">{{ r.report_code }}</div>
+                                    </td>
+                                    <td><span class="badge-pill-soft">{{ r.category.category_name if r.category else 'N/A' }}</span></td>
+                                    <td>{{ r.date_lost }}</td>
+                                    <td>{{ r.location.location_name if r.location else 'Campus' }}</td>
+                                    <td>
+                                        {% if r.review_status == 'approved' %}
+                                            <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary);">Approved</span>
+                                        {% elif r.review_status == 'pending_review' %}
+                                            <span class="badge" style="background-color: var(--highlight-light); color: #6C541B;">Pending Review</span>
+                                        {% elif r.review_status == 'rejected' %}
+                                            <span class="badge" style="background-color: var(--accent-light); color: var(--accent);" title="{{ r.rejection_reason }}">Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ r.review_status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary);">
+                                            {{ r.report_status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('reports.view_lost', id=r.id) }}" class="btn btn-sm btn-outline-slate me-1" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('reports.edit_lost', id=r.id) }}" class="btn btn-sm btn-outline-warm me-1" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if r.report_status == 'active' %}
+                                            <form method="POST" action="{{ url_for('reports.cancel_report', report_type='lost', id=r.id) }}" class="d-inline" onsubmit="return confirm('Cancel this report?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-sm btn-outline-terracotta" title="Cancel">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-2 text-secondary d-block mb-1"></i>
+                                        You haven't reported any lost belongings yet.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. My Found Items -->
+        <div class="tab-pane fade" id="found-pane" role="tabpanel">
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Date Found</th>
+                                <th>Location</th>
+                                <th>Custody</th>
+                                <th>Review Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in found_reports %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--brand-secondary);">{{ f.item_name }}</div>
+                                        <div class="small text-muted">{{ f.report_code }}</div>
+                                    </td>
+                                    <td><span class="badge-pill-soft">{{ f.category.category_name if f.category else 'N/A' }}</span></td>
+                                    <td>{{ f.date_found }}</td>
+                                    <td>{{ f.location.location_name if f.location else 'Campus' }}</td>
+                                    <td><span class="badge" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary);">{{ f.custody_status|replace('_', ' ')|title }}</span></td>
+                                    <td>
+                                        {% if f.review_status == 'approved' %}
+                                            <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary);">Approved</span>
+                                        {% elif f.review_status == 'pending_review' %}
+                                            <span class="badge" style="background-color: var(--highlight-light); color: #6C541B;">Pending Review</span>
+                                        {% elif f.review_status == 'rejected' %}
+                                            <span class="badge" style="background-color: var(--accent-light); color: var(--accent);">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('reports.view_found', id=f.id) }}" class="btn btn-sm btn-outline-slate me-1">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('reports.edit_found', id=f.id) }}" class="btn btn-sm btn-outline-warm me-1">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if f.report_status == 'active' %}
+                                            <form method="POST" action="{{ url_for('reports.cancel_report', report_type='found', id=f.id) }}" class="d-inline" onsubmit="return confirm('Cancel this report?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-sm btn-outline-terracotta">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-2 text-secondary d-block mb-1"></i>
+                                        You have not reported finding any belongings.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Smart Matches -->
+        <div class="tab-pane fade" id="matches-pane" role="tabpanel">
+            <div id="matches-section" class="row g-4">
+                {% for m in potential_matches %}
+                    <div class="col-lg-6">
+                        <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="match-score-pill {{ 'match-high' if m.match_score >= 80 else 'match-medium' if m.match_score >= 50 else 'match-low' }}">
+                                    <i class="bi bi-stars"></i> {{ m.match_score }}% Match • {{ m.classification }}
+                                </span>
+                                <span class="small text-muted">{{ m.created_at.strftime('%Y-%m-%d') }}</span>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-6 border-end" style="border-color: var(--border-subtle) !important;">
+                                    <span class="badge-status badge-lost d-inline-block position-static mb-1">YOUR LOST ITEM</span>
+                                    <div class="fw-bold mt-1" style="color: var(--brand-secondary);">{{ m.lost_report.item_name }}</div>
+                                    <div class="small text-muted">{{ m.lost_report.report_code }}</div>
+                                    <div class="small text-muted mt-1"><i class="bi bi-geo-alt" style="color: var(--brand-primary);"></i> {{ m.lost_report.location.location_name if m.lost_report.location else 'Campus' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <span class="badge-status badge-found d-inline-block position-static mb-1">FOUND MATCH</span>
+                                    <div class="fw-bold mt-1" style="color: var(--brand-secondary);">{{ m.found_report.item_name }}</div>
+                                    <div class="small text-muted">{{ m.found_report.report_code }}</div>
+                                    <div class="small text-muted mt-1"><i class="bi bi-geo-alt" style="color: var(--brand-primary);"></i> {{ m.found_report.location.location_name if m.found_report.location else 'Campus' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-2 small mb-3 border" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                                <strong style="color: var(--brand-secondary);">Match Explanation:</strong><br/>
+                                <span class="text-muted">{{ m.match_explanation }}</span>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('reports.view_found', id=m.found_report_id) }}" class="btn btn-outline-slate btn-sm flex-grow-1">
+                                    Inspect Found Item
+                                </a>
+                                <a href="{{ url_for('claims.submit', found_report_id=m.found_report_id) }}" class="btn btn-sage btn-sm flex-grow-1">
+                                    <i class="bi bi-shield-check me-1"></i> Claim Belonging
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-cpu fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                        <h5 class="fw-bold" style="color: var(--brand-secondary);">No Matching Items Detected Yet</h5>
+                        <p class="text-muted small">Our algorithm constantly scans new found reports and will alert you the moment a potential match is registered.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 4. My Claims -->
+        <div class="tab-pane fade" id="claims-pane" role="tabpanel">
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Claim Code</th>
+                                <th>Found Item</th>
+                                <th>Date Filed</th>
+                                <th>Status</th>
+                                <th>Handover Details</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in claims %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--brand-primary);">{{ c.claim_code }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ c.found_report.item_name }}</div>
+                                        <div class="small text-muted">{{ c.found_report.report_code }}</div>
+                                    </td>
+                                    <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge {{ c.status_badge_class }}">
+                                            {{ c.claim_status|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if c.handover %}
+                                            <div class="small">
+                                                <strong>{{ c.handover.location.location_name if c.handover.location else 'Security HQ' }}</strong><br/>
+                                                <span class="text-muted">{{ c.handover.scheduled_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                            </div>
+                                            {% if not c.handover.claimant_confirmed and c.handover.handover_status == 'scheduled' %}
+                                                <form method="POST" action="{{ url_for('handovers.confirm', id=c.handover.id) }}" class="mt-1">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="submit" class="btn btn-outline-sage btn-xs py-0 px-2" style="font-size: 0.75rem;">
+                                                        <i class="bi bi-check-lg"></i> Confirm Appointment
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted small">Pending approval</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('claims.view_claim', id=c.id) }}" class="btn btn-sm btn-outline-slate me-1">
+                                            View Claim
+                                        </a>
+                                        <a href="{{ url_for('messages.claim_conversation', claim_id=c.id) }}" class="btn btn-sm btn-outline-warm" title="Messages">
+                                            <i class="bi bi-chat-dots"></i>
+                                        </a>
+                                        {% if c.handover and c.handover.handover_status == 'completed' %}
+                                            <a href="{{ url_for('handovers.download_receipt', id=c.handover.id) }}" class="btn btn-sm btn-sage ms-1" title="Download Official Receipt">
+                                                <i class="bi bi-file-earmark-pdf"></i> Receipt
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="bi bi-shield-slash fs-2 text-secondary d-block mb-1"></i>
+                                        You have not submitted any ownership claims.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Messages -->
+        <div class="tab-pane fade" id="messages-pane" role="tabpanel">
+            <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <h5 class="fw-bold mb-3" style="color: var(--brand-secondary);">Claim Communications</h5>
+                <div class="list-group list-group-flush">
+                    {% for convo in conversations %}
+                        <a href="{{ url_for('messages.claim_conversation', claim_id=convo.claim_id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 border-bottom" style="border-color: var(--border-subtle) !important;">
+                            <div>
+                                <h6 class="mb-1 fw-bold" style="color: var(--brand-secondary);">Claim {{ convo.claim.claim_code }} – {{ convo.claim.found_report.item_name }}</h6>
+                                <p class="mb-0 text-muted small">
+                                    {% set last_msg = convo.messages.order_by(convo.messages.statement.columns['created_at'].desc()).first() %}
+                                    {% if last_msg %}
+                                        <strong>{{ last_msg.sender.full_name }}:</strong> {{ last_msg.message_text[:60] }}...
+                                    {% else %}
+                                        No messages exchanged yet.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary); border-radius: 20px;">{{ convo.messages.count() }} msg</span>
+                        </a>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-chat-dots fs-2 text-secondary d-block mb-1"></i>
+                            No active claim conversations.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

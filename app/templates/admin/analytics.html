@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Reports – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Intelligence</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Platform Analytics & Insights</h3>
+                    <p class="text-muted small mb-0">Database-backed reporting, efficiency metrics, and hotspot tracking</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('analytics.export_csv') }}" class="btn btn-outline-slate btn-sm">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+                    </a>
+                    <a href="{{ url_for('analytics.export_pdf') }}" class="btn btn-sage btn-sm">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Executive PDF Summary
+                    </a>
+                </div>
+            </div>
+
+            <!-- Timeframe Filter -->
+            <div class="card p-3 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small fw-semibold text-muted">Analysis Window:</span>
+                    <a href="{{ url_for('analytics.index', days=7) }}" class="btn btn-sm {{ 'btn-sage' if days == 7 else 'btn-outline-warm' }}">Last 7 Days</a>
+                    <a href="{{ url_for('analytics.index', days=30) }}" class="btn btn-sm {{ 'btn-sage' if days == 30 else 'btn-outline-warm' }}">Last 30 Days</a>
+                    <a href="{{ url_for('analytics.index', days=90) }}" class="btn btn-sm {{ 'btn-sage' if days == 90 else 'btn-outline-warm' }}">Last 90 Days</a>
+                    <a href="{{ url_for('analytics.index', days=365) }}" class="btn btn-sm {{ 'btn-sage' if days == 365 else 'btn-outline-warm' }}">All Year</a>
+                </div>
+            </div>
+
+            <!-- Quantitative KPI Metric Cards (Balanced 4 Accents) -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-terracotta">
+                        <div class="stat-header">
+                            <span class="stat-label">Lost Reports</span>
+                            <div class="stat-icon"><i class="bi bi-search"></i></div>
+                        </div>
+                        <div class="stat-number">{{ total_lost }}</div>
+                        <p class="stat-desc">Reported lost items</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-sage">
+                        <div class="stat-header">
+                            <span class="stat-label">Found Submissions</span>
+                            <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                        </div>
+                        <div class="stat-number">{{ total_found }}</div>
+                        <p class="stat-desc">Turned-in belongings</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-slate">
+                        <div class="stat-header">
+                            <span class="stat-label">Recoveries Completed</span>
+                            <div class="stat-icon"><i class="bi bi-patch-check"></i></div>
+                        </div>
+                        <div class="stat-number">{{ total_recovered }}</div>
+                        <p class="stat-desc">Successful returns</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-mustard">
+                        <div class="stat-header">
+                            <span class="stat-label">Recovery Rate</span>
+                            <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+                        </div>
+                        <div class="stat-number">{{ recovery_rate }}%</div>
+                        <p class="stat-desc">Platform efficiency</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Incidents by Belonging Category</h6>
+                        <canvas id="analyticsCategoryChart" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                        <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Reports by Academic Department</h6>
+                        <canvas id="deptChart" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Hotspots Table -->
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background-color: var(--bg-tertiary); border-color: var(--border-color) !important;">
+                    <span class="fw-bold" style="color: var(--brand-secondary);"><i class="bi bi-geo-alt me-1" style="color: var(--accent);"></i> Campus Hotspots (Most Frequently Reported Locations)</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Campus Location</th>
+                                <th>Lost Reports</th>
+                                <th>Found Reports</th>
+                                <th class="text-end">Total Logged Incidents</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loc in location_stats %}
+                                <tr>
+                                    <td><strong class="text-dark">{{ loc.location_name }}</strong></td>
+                                    <td><span class="fw-semibold" style="color: var(--accent);">{{ loc.lost_cnt }}</span></td>
+                                    <td><span class="fw-semibold" style="color: var(--brand-primary);">{{ loc.found_cnt }}</span></td>
+                                    <td class="text-end">
+                                        <span class="badge" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary); font-size: 0.85rem;">{{ loc.lost_cnt + loc.found_cnt }}</span>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No location data for this timeframe.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="admin-analytics-data" type="application/json">
+{
+    "catNames": {{ cat_names|tojson|safe }},
+    "catLostCounts": {{ cat_lost_counts|tojson|safe }},
+    "catFoundCounts": {{ cat_found_counts|tojson|safe }},
+    "deptNames": {{ dept_names|tojson|safe }},
+    "deptReportCounts": {{ dept_report_counts|tojson|safe }}
+}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dataElement = document.getElementById('admin-analytics-data');
+        const aData = dataElement ? JSON.parse(dataElement.textContent) : {};
+        const catNames = aData.catNames || [];
+        const catLostCounts = aData.catLostCounts || [];
+        const catFoundCounts = aData.catFoundCounts || [];
+        const deptNames = aData.deptNames || [];
+        const deptReportCounts = aData.deptReportCounts || [];
+
+        // Coordinated Palette Category Chart
+        const catCanvas = document.getElementById('analyticsCategoryChart');
+        if (catCanvas) {
+            new Chart(catCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: catNames,
+                    datasets: [
+                        {
+                            label: 'Lost',
+                            data: catLostCounts,
+                            backgroundColor: '#D98C68'
+                        },
+                        {
+                            label: 'Found',
+                            data: catFoundCounts,
+                            backgroundColor: '#4F7C72'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { maxRotation: 45, minRotation: 0 } },
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        // Coordinated Palette Department Chart
+        const deptCanvas = document.getElementById('deptChart');
+        if (deptCanvas) {
+            new Chart(deptCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: deptNames,
+                    datasets: [{
+                        label: 'Reports Filed',
+                        data: deptReportCounts,
+                        backgroundColor: '#243B53'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

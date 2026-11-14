@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Database files
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+
+# Uploads except placeholders
+app/static/uploads/reports/*
+app/static/uploads/evidence/*
+app/static/uploads/qrcodes/*
+!app/static/uploads/reports/.gitkeep
+!app/static/uploads/evidence/.gitkeep
+!app/static/uploads/qrcodes/.gitkeep
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

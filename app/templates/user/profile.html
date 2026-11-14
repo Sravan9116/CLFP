@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="editorial-eyebrow mb-1">Account Management</div>
+                <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Personal Account & Security</h3>
+                <p class="text-muted small mb-4">View your institutional records and update security preferences</p>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Full Legal Name</label>
+                            <input type="text" class="form-control" style="background-color: var(--bg-tertiary);" value="{{ current_user.full_name }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">University Email</label>
+                            <input type="text" class="form-control" style="background-color: var(--bg-tertiary);" value="{{ current_user.email }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Institutional ID</label>
+                            <input type="text" class="form-control" style="background-color: var(--bg-tertiary);" value="{{ current_user.institutional_id }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Department</label>
+                            <input type="text" class="form-control" style="background-color: var(--bg-tertiary);" value="{{ current_user.department.department_name if current_user.department else 'N/A' }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Campus Role</label>
+                            <input type="text" class="form-control" style="background-color: var(--bg-tertiary);" value="{{ current_user.role|upper }} ({{ current_user.user_type|title }})" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Mobile Contact Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ current_user.phone or '' }}" placeholder="+1 (555) 012-3456">
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-color: var(--border-color);">
+
+                    <h5 class="fw-bold mb-3" style="color: var(--brand-secondary);">Change Password</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" placeholder="Enter existing password to verify">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" placeholder="At least 8 characters">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Re-enter new password">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-warm px-3">Cancel</a>
+                        <button type="submit" class="btn btn-sage px-4">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

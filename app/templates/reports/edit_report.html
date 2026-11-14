@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ report.item_name }} – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3" style="border-color: var(--border-color) !important;">
+                    <div>
+                        <div class="editorial-eyebrow mb-1">Modify Record</div>
+                        <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Edit Report {{ report.report_code }}</h3>
+                        <p class="text-muted small mb-0">{{ report_type|title }} belonging information</p>
+                    </div>
+                    <span class="badge-status {{ 'badge-lost' if report_type == 'lost' else 'badge-found' }} d-inline-block position-static">
+                        {{ report_type|upper }}
+                    </span>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="item_name" class="form-label">Item Title *</label>
+                            <input type="text" class="form-control" id="item_name" name="item_name" value="{{ report.item_name }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="category_id" class="form-label">Category *</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                {% for c in categories %}
+                                    <option value="{{ c.id }}" {{ 'selected' if report.category_id == c.id }}>{{ c.category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required>{{ report.description }}</textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="brand" class="form-label">Brand / Model</label>
+                            <input type="text" class="form-control" id="brand" name="brand" value="{{ report.brand or '' }}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="primary_color" class="form-label">Primary Color *</label>
+                            <input type="text" class="form-control" id="primary_color" name="primary_color" value="{{ report.primary_color }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="secondary_color" class="form-label">Secondary Color</label>
+                            <input type="text" class="form-control" id="secondary_color" name="secondary_color" value="{{ report.secondary_color or '' }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="location_id" class="form-label">Campus Location *</label>
+                            <select class="form-select" id="location_id" name="location_id" required>
+                                {% for loc in locations %}
+                                    <option value="{{ loc.id }}" {{ 'selected' if report.location_id == loc.id }}>{{ loc.location_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {% if report_type == 'lost' %}
+                            <div class="col-md-6">
+                                <label for="additional_location" class="form-label">Specific Area / Room</label>
+                                <input type="text" class="form-control" id="additional_location" name="additional_location" value="{{ report.additional_location or '' }}">
+                            </div>
+                        {% else %}
+                            <div class="col-md-6">
+                                <label for="custody_status" class="form-label">Custody Status</label>
+                                <select class="form-select" id="custody_status" name="custody_status">
+                                    <option value="finder_possession" {{ 'selected' if report.custody_status == 'finder_possession' }}>I currently possess item</option>
+                                    <option value="security_office" {{ 'selected' if report.custody_status == 'security_office' }}>Campus Security HQ</option>
+                                    <option value="admin_office" {{ 'selected' if report.custody_status == 'admin_office' }}>Administrative Helpdesk</option>
+                                    <option value="collection_point" {{ 'selected' if report.custody_status == 'collection_point' }}>Department Collection Point</option>
+                                </select>
+                            </div>
+                        {% endif %}
+
+                        <div class="col-12">
+                            <label class="form-label">Update Photograph</label>
+                            <input type="file" class="form-control" name="image" accept="image/jpeg,image/png,image/webp">
+                            {% if report.image_path %}
+                                <div class="mt-2 small text-muted">
+                                    Current photo on file: <a href="{{ url_for('static', filename=report.image_path) }}" target="_blank" style="color: var(--brand-primary);">View file</a>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <label for="identifying_features" class="form-label fw-bold" style="color: var(--accent);">Confidential Identifying Features</label>
+                            <textarea class="form-control" id="identifying_features" name="identifying_features" rows="2">{{ report.identifying_features or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                        <a href="{{ url_for('reports.view_lost' if report_type == 'lost' else 'reports.view_found', id=report.id) }}" class="btn btn-outline-warm px-3">Cancel</a>
+                        <button type="submit" class="btn btn-sage px-4">
+                            Save Changes <i class="bi bi-check2 ms-1"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}How CampusConnect Works – University Lost & Found{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center max-w-700 mx-auto mb-5">
+        <div class="editorial-eyebrow mb-1">Comprehensive Operational Guide</div>
+        <h2 class="fw-bold" style="color: var(--brand-secondary);">How CampusConnect Operates</h2>
+        <p class="lead text-muted mx-auto" style="max-width: 650px;">A secure, transparent, and intelligent platform designed to protect campus property and reunite owners with lost belongings.</p>
+    </div>
+
+    <!-- Numbered Steps -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-3">
+            <div class="step-card-editorial">
+                <div class="step-num-editorial">
+                    <span>01</span>
+                    <i class="bi bi-pencil-square fs-4" style="color: var(--accent);"></i>
+                </div>
+                <div class="step-title-editorial">Report Belonging</div>
+                <p class="step-desc-editorial">
+                    File a lost or found report specifying the item category, campus building, colors, and timeframe. Upload photos (automatically compressed) and record confidential identifying details.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="step-card-editorial">
+                <div class="step-num-editorial">
+                    <span>02</span>
+                    <i class="bi bi-cpu fs-4" style="color: var(--brand-secondary);"></i>
+                </div>
+                <div class="step-title-editorial">Smart Matching</div>
+                <p class="step-desc-editorial">
+                    Our backend engine runs TF-IDF vector similarity on item names and descriptions, color cross-matching, campus proximity, and date compatibility to calculate a 0–100% matching confidence score.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="step-card-editorial">
+                <div class="step-num-editorial">
+                    <span>03</span>
+                    <i class="bi bi-shield-check fs-4" style="color: var(--highlight);"></i>
+                </div>
+                <div class="step-title-editorial">Verification</div>
+                <p class="step-desc-editorial">
+                    Claimants submit ownership statements and proof (invoices, lockscreen descriptions, serials). Campus administrators evaluate evidence against confidential finder notes to prevent fraud.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="step-card-editorial">
+                <div class="step-num-editorial">
+                    <span>04</span>
+                    <i class="bi bi-patch-check fs-4" style="color: var(--brand-primary);"></i>
+                </div>
+                <div class="step-title-editorial">Recovery</div>
+                <p class="step-desc-editorial">
+                    An in-person handover is scheduled at security or administrative desks. Both parties verify physical IDs, confirm recovery, and receive a formal PDF receipt with a verification QR code.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

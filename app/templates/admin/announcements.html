@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Broadcasts</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Campus Announcements</h3>
+                    <p class="text-muted small mb-0">Publish community broadcasts regarding bulk items, collection points, and security alerts</p>
+                </div>
+                <button type="button" class="btn btn-sage btn-sm" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                    <i class="bi bi-megaphone me-1"></i> Post Announcement
+                </button>
+            </div>
+
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Target Audience</th>
+                                <th>Expires</th>
+                                <th>Author</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in announcements %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ a.title }}</div>
+                                        <div class="small text-muted">{{ a.description[:80] }}...</div>
+                                    </td>
+                                    <td><span class="badge-pill-soft">{{ a.category }}</span></td>
+                                    <td><span class="badge" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary);">{{ a.target_audience|title }}</span></td>
+                                    <td>{{ a.expires_at or 'Permanent' }}</td>
+                                    <td>{{ a.author.full_name }}</td>
+                                    <td>
+                                        <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary);">
+                                            {{ a.status|title }}
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">{{ a.created_at.strftime('%Y-%m-%d') }}</small></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        No active campus announcements.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newAnnouncementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header border-bottom" style="background-color: var(--bg-tertiary);">
+                    <h5 class="modal-title fw-bold" style="color: var(--brand-secondary);">Post Campus Announcement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Announcement Title *</label>
+                        <input type="text" class="form-control" name="title" placeholder="e.g. End of Semester Belongings Claim Deadline" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category">
+                                <option value="general">General Campus Notice</option>
+                                <option value="event">Major Campus Event</option>
+                                <option value="alert">Security Alert</option>
+                                <option value="handover">Special Handover Session</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Target Audience</label>
+                            <select class="form-select" name="target_audience">
+                                <option value="all">Everyone (Students, Faculty, Staff)</option>
+                                <option value="students">Students Only</option>
+                                <option value="faculty">Faculty & Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description / Announcement Body *</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Enter clear instructions and recovery details..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Expiration Date (Optional)</label>
+                        <input type="date" class="form-control" name="expires_at">
+                    </div>
+                </div>
+                <div class="modal-footer border-top bg-light">
+                    <button type="button" class="btn btn-outline-warm btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sage btn-sm">Publish Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

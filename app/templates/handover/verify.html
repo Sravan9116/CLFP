@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Recovery: {{ handover.recovery_code }} – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card p-4 p-md-5 text-center border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="d-inline-flex align-items-center justify-content-center mx-auto mb-3 rounded-circle" style="width: 64px; height: 64px; background-color: var(--brand-primary-light); color: var(--brand-primary); border: 1px solid rgba(79, 124, 114, 0.2);">
+                    <i class="bi bi-patch-check fs-2"></i>
+                </div>
+
+                <div class="editorial-eyebrow mb-1">Official Verification</div>
+                <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Authenticated Item Recovery</h3>
+                <p class="text-muted small mb-4">Official digital record issued by University Lost & Found Administration</p>
+
+                <div class="p-3 rounded-2 border text-start mb-4" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted small">Recovery Receipt Code</span>
+                        <span class="fw-bold" style="color: var(--brand-primary);">{{ handover.recovery_code }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted small">Item Recovered</span>
+                        <span class="fw-bold" style="color: var(--brand-secondary);">{{ found_item.item_name }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted small">Category</span>
+                        <span style="color: var(--text-primary);">{{ found_item.category.category_name if found_item.category else 'N/A' }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted small">Handover Location</span>
+                        <span style="color: var(--text-primary);">{{ handover.location.location_name if handover.location else 'Campus Security HQ' }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted small">Status</span>
+                        <span class="badge {{ handover.status_badge_class }}">{{ handover.handover_status|replace('_', ' ')|upper }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted small">Handover Timestamp</span>
+                        <span style="color: var(--text-primary);">{{ handover.completed_at.strftime('%Y-%m-%d %H:%M UTC') if handover.completed_at else 'Scheduled Appointment' }}</span>
+                    </div>
+                </div>
+
+                <div class="small text-muted mb-4">
+                    <i class="bi bi-shield-check me-1" style="color: var(--brand-primary);"></i>
+                    This recovery was verified through physical institutional photo ID inspection in accordance with campus property protection regulations.
+                </div>
+
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-slate btn-sm px-4">
+                    Return to CampusConnect Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

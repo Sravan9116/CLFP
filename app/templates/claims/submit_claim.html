@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Ownership Claim – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3" style="border-color: var(--border-color) !important;">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-2" style="width: 48px; height: 48px; background-color: var(--brand-primary-light); color: var(--brand-primary); border: 1px solid rgba(79, 124, 114, 0.2);">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="editorial-eyebrow mb-1">Claim Intake</div>
+                        <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Ownership Verification Claim</h3>
+                        <p class="text-muted small mb-0">Claiming Found Item: <strong>{{ found_item.item_name }}</strong> ({{ found_item.report_code }})</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info border small mb-4">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Claims are reviewed by university administrators. Never claim an item that does not belong to you; false claims violate campus disciplinary code.
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    {% if user_lost_reports %}
+                        <div class="mb-3">
+                            <label for="lost_report_id" class="form-label">Link to Your Previous Lost Report (Optional)</label>
+                            <select class="form-select" id="lost_report_id" name="lost_report_id">
+                                <option value="">-- Direct Claim (No Previous Report) --</option>
+                                {% for r in user_lost_reports %}
+                                    <option value="{{ r.id }}">{{ r.report_code }}: {{ r.item_name }} (Lost on {{ r.date_lost }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small" style="color: var(--text-muted);">Linking a prior lost report helps speed up administrative verification.</div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="ownership_description" class="form-label">Why does this item belong to you? *</label>
+                        <textarea class="form-control" id="ownership_description" name="ownership_description" rows="3" placeholder="Provide background on where and when you lost it, along with identifiable physical traits." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="identifying_answers" class="form-label">Secret Identifying Characteristics / Verification Answers *</label>
+                        <textarea class="form-control" id="identifying_answers" name="identifying_answers" rows="3" placeholder="Specify hidden marks, exact contents, stickers, engravings, serial number fragments, or lockscreen picture description." required></textarea>
+                        <div class="form-text small" style="color: var(--text-muted);">These answers will only be viewed by administrators and compared against confidential finder notes.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="purchase_date" class="form-label">Approximate Purchase Date / Era</label>
+                            <input type="text" class="form-control" id="purchase_date" name="purchase_date" placeholder="e.g. September 2024, About 6 months ago">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="contact_method" class="form-label">Preferred Contact Method</label>
+                            <select class="form-select" id="contact_method" name="contact_method">
+                                <option value="email" selected>University Email</option>
+                                <option value="portal">CampusConnect Direct Message</option>
+                                <option value="phone">Phone / SMS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="evidence_file" class="form-label">Proof of Ownership Attachment (Optional)</label>
+                        <input type="file" class="form-control" id="evidence_file" name="evidence_file" accept="image/jpeg,image/png,application/pdf">
+                        <div class="form-text small" style="color: var(--text-muted);">Upload an invoice, store receipt, warranty card, product box photograph, or serial number documentation (PDF, JPG, PNG).</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                        <a href="{{ url_for('reports.view_found', id=found_item.id) }}" class="btn btn-outline-warm px-3">Cancel</a>
+                        <button type="submit" class="btn btn-sage px-4">
+                            <i class="bi bi-shield-check me-1"></i> Submit Ownership Claim
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+<div class="admin-sidebar shadow-sm rounded-3 mb-4 mb-lg-0">
+    <div class="sidebar-heading">Core Administration</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+        <i class="bi bi-speedometer2"></i> Overview
+    </a>
+    <a href="{{ url_for('admin.reports') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.reports' }}">
+        <i class="bi bi-clipboard-check"></i> Manage Reports
+    </a>
+    <a href="{{ url_for('admin.claims') }}" class="sidebar-link {{ 'active' if request.endpoint in ['admin.claims', 'admin.view_claim'] }}">
+        <i class="bi bi-shield-check"></i> Claims & Handovers
+    </a>
+    <a href="{{ url_for('admin.matches') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.matches' }}">
+        <i class="bi bi-cpu"></i> Smart AI Matches
+    </a>
+    <a href="{{ url_for('messages.index') }}" class="sidebar-link {{ 'active' if request.endpoint == 'messages.index' }}">
+        <i class="bi bi-chat-dots"></i> Communications
+    </a>
+
+    <div class="sidebar-heading">Campus Catalog</div>
+    <a href="{{ url_for('admin.locations') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.locations' }}">
+        <i class="bi bi-geo-alt"></i> Campus Locations
+    </a>
+    <a href="{{ url_for('admin.categories') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.categories' }}">
+        <i class="bi bi-tags"></i> Item Categories
+    </a>
+    <a href="{{ url_for('admin.announcements') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.announcements' }}">
+        <i class="bi bi-megaphone"></i> Announcements
+    </a>
+
+    <div class="sidebar-heading">Analytics & Security</div>
+    <a href="{{ url_for('analytics.index') }}" class="sidebar-link {{ 'active' if request.endpoint == 'analytics.index' }}">
+        <i class="bi bi-graph-up"></i> Platform Analytics
+    </a>
+    <a href="{{ url_for('admin.users') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.users' }}">
+        <i class="bi bi-people"></i> User Accounts
+    </a>
+    <a href="{{ url_for('admin.audit_logs') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.audit_logs' }}">
+        <i class="bi bi-clock-history"></i> Audit Logs
+    </a>
+    <a href="{{ url_for('admin.settings') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.settings' }}">
+        <i class="bi bi-gear"></i> System Settings
+    </a>
+</div>
+

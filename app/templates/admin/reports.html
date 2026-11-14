@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reports – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Administrative Moderation</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Report Review & Moderation</h3>
+                    <p class="text-muted small mb-0">Approve, reject, or inspect user lost and found submissions</p>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card p-3 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <form method="GET" class="row g-2 align-items-center">
+                    <div class="col-md-3 col-6">
+                        <select class="form-select" name="type">
+                            <option value="all" {{ 'selected' if rtype == 'all' }}>All Report Types</option>
+                            <option value="lost" {{ 'selected' if rtype == 'lost' }}>Lost Reports Only</option>
+                            <option value="found" {{ 'selected' if rtype == 'found' }}>Found Reports Only</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 col-6">
+                        <select class="form-select" name="status">
+                            <option value="all" {{ 'selected' if status == 'all' }}>All Review Statuses</option>
+                            <option value="pending_review" {{ 'selected' if status == 'pending_review' }}>Pending Review Only</option>
+                            <option value="approved" {{ 'selected' if status == 'approved' }}>Approved Only</option>
+                            <option value="rejected" {{ 'selected' if status == 'rejected' }}>Rejected Only</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 col-12">
+                        <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Search title or report code...">
+                    </div>
+
+                    <div class="col-md-2 col-12 text-end">
+                        <button type="submit" class="btn btn-sage w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Code</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Submitted By</th>
+                                <th>Review Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in lost_reports + found_reports %}
+                                {% set is_lost = (r.__class__.__name__ == 'LostReport') %}
+                                <tr>
+                                    <td>
+                                        <span class="badge-status {{ 'badge-lost' if is_lost else 'badge-found' }} d-inline-block position-static">
+                                            {{ 'LOST' if is_lost else 'FOUND' }}
+                                        </span>
+                                    </td>
+                                    <td><strong style="color: var(--brand-secondary);">{{ r.report_code }}</strong></td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ r.item_name }}</div>
+                                        <div class="small text-muted">{{ r.date_lost if is_lost else r.date_found }}</div>
+                                    </td>
+                                    <td><span class="badge-pill-soft">{{ r.category.category_name if r.category else 'N/A' }}</span></td>
+                                    <td>{{ r.location.location_name if r.location else 'Campus' }}</td>
+                                    <td>
+                                        <div class="small fw-semibold text-dark">{{ r.reporter.full_name if is_lost else r.finder.full_name }}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{{ r.reporter.institutional_id if is_lost else r.finder.institutional_id }}</div>
+                                    </td>
+                                    <td>
+                                        {% if r.review_status == 'approved' %}
+                                            <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary);">Approved</span>
+                                        {% elif r.review_status == 'pending_review' %}
+                                            <span class="badge" style="background-color: var(--highlight-light); color: #6C541B;">Pending Review</span>
+                                        {% elif r.review_status == 'rejected' %}
+                                            <span class="badge" style="background-color: var(--accent-light); color: var(--accent);" title="{{ r.rejection_reason }}">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('reports.view_lost' if is_lost else 'reports.view_found', id=r.id) }}" class="btn btn-sm btn-outline-slate me-1" title="Inspect">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        {% if r.review_status != 'approved' %}
+                                            <form method="POST" action="{{ url_for('admin.approve_report', rtype='lost' if is_lost else 'found', id=r.id) }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-sm btn-sage me-1" title="Approve">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if r.review_status != 'rejected' %}
+                                            <button type="button" class="btn btn-sm btn-outline-terracotta" data-bs-toggle="modal" data-bs-target="#rejectModal{{ r.report_code }}" title="Reject">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+
+                                            <!-- Rejection Modal -->
+                                            <div class="modal fade" id="rejectModal{{ r.report_code }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content border-0 shadow">
+                                                        <form method="POST" action="{{ url_for('admin.reject_report', rtype='lost' if is_lost else 'found', id=r.id) }}">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                            <div class="modal-header border-bottom" style="background-color: var(--bg-tertiary);">
+                                                                <h5 class="modal-title fw-bold" style="color: var(--brand-secondary);">Reject Report {{ r.report_code }}</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body text-start p-4">
+                                                                <p class="small text-muted mb-3">Please specify a mandatory justification that will be sent to the reporter.</p>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Rejection Reason *</label>
+                                                                    <textarea class="form-control" name="reason" rows="3" placeholder="e.g. Duplicate report, insufficient description, inappropriate photograph..." required></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer border-top bg-light">
+                                                                <button type="button" class="btn btn-outline-warm btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-terracotta btn-sm">Confirm Rejection</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        No reports found matching your criteria.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Ownership Claims – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="editorial-eyebrow mb-1">Claim Verification</div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">My Ownership Claims</h3>
+            <p class="text-muted small mb-0">Track verification progress, handover appointments, and recovery receipts</p>
+        </div>
+        <a href="{{ url_for('reports.index', tab='found') }}" class="btn btn-outline-sage btn-sm">
+            <i class="bi bi-search me-1"></i> Browse Found Items
+        </a>
+    </div>
+
+    <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+        <div class="table-responsive">
+            <table class="table table-campus mb-0">
+                <thead>
+                    <tr>
+                        <th>Claim Code</th>
+                        <th>Found Item</th>
+                        <th>Date Submitted</th>
+                        <th>Status</th>
+                        <th>Handover Appointment</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in claims %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--brand-primary);">{{ c.claim_code }}</strong>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ c.found_report.item_name }}</div>
+                                <div class="small text-muted">{{ c.found_report.report_code }}</div>
+                            </td>
+                            <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span class="badge {{ c.status_badge_class }}">
+                                    {{ c.claim_status|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if c.handover %}
+                                    <div class="small">
+                                        <strong>{{ c.handover.location.location_name if c.handover.location else 'Campus Security HQ' }}</strong><br/>
+                                        <span class="text-muted">{{ c.handover.scheduled_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                    </div>
+                                    {% if not c.handover.claimant_confirmed and c.handover.handover_status == 'scheduled' %}
+                                        <form method="POST" action="{{ url_for('handovers.confirm', id=c.handover.id) }}" class="mt-1">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-outline-sage btn-xs py-0 px-2" style="font-size: 0.75rem;">
+                                                <i class="bi bi-check-lg"></i> Confirm Appointment
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted small">Not scheduled</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a href="{{ url_for('claims.view_claim', id=c.id) }}" class="btn btn-sm btn-outline-slate me-1">
+                                    View
+                                </a>
+                                <a href="{{ url_for('messages.claim_conversation', claim_id=c.id) }}" class="btn btn-sm btn-outline-warm me-1" title="Messages">
+                                    <i class="bi bi-chat-dots"></i>
+                                </a>
+                                {% if c.handover and c.handover.handover_status == 'completed' %}
+                                    <a href="{{ url_for('handovers.download_receipt', id=c.handover.id) }}" class="btn btn-sm btn-sage" title="Download Receipt">
+                                        <i class="bi bi-file-earmark-pdf"></i> Receipt
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-shield-slash fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                                <h5 class="fw-bold" style="color: var(--brand-secondary);">No Claims Filed</h5>
+                                <p class="small text-muted mb-0">Browse found belongings in the catalog to submit an ownership claim.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="editorial-eyebrow mb-1">Activity Stream</div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Your Notifications</h3>
+            <p class="text-muted small mb-0">Track real-time status alerts for reports, matches, and claims</p>
+        </div>
+        <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-outline-sage btn-sm">
+                <i class="bi bi-check2-all me-1"></i> Mark All as Read
+            </button>
+        </form>
+    </div>
+
+    <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+        <div class="list-group list-group-flush">
+            {% for n in notifications %}
+                <div class="list-group-item p-3 border-bottom" style="background-color: {{ 'var(--brand-primary-light)' if not n.is_read else '#FFFFFF' }}; border-color: var(--border-subtle) !important;">
+                    <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0 fw-bold" style="color: {{ 'var(--brand-primary)' if not n.is_read else 'var(--brand-secondary)' }};">
+                            {% if not n.is_read %}
+                                <span class="badge me-2" style="background-color: var(--accent); color: #fff; font-size: 0.65rem;">NEW</span>
+                            {% endif %}
+                            {{ n.title }}
+                        </h6>
+                        <small class="text-muted">{{ n.created_at.strftime('%b %d, %Y %H:%M') }}</small>
+                    </div>
+                    <p class="mb-2 text-secondary small">{{ n.message }}</p>
+                    <div class="d-flex gap-2 align-items-center">
+                        {% if n.link_url %}
+                            <a href="{{ n.link_url }}" class="btn btn-sm btn-outline-slate py-0 px-2" style="font-size: 0.75rem;">
+                                View Related Record <i class="bi bi-arrow-right"></i>
+                            </a>
+                        {% endif %}
+                        {% if not n.is_read %}
+                            <form method="POST" action="{{ url_for('notifications.mark_read', id=n.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-link text-muted py-0 px-1 text-decoration-none" style="font-size: 0.75rem;">
+                                    Mark as read
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-bell-slash fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                    <p class="mb-0">You have no notifications yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

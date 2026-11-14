@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Logs – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Compliance & Security</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">System Audit Trail</h3>
+                    <p class="text-muted small mb-0">Comprehensive chronological log of critical administrative and security actions</p>
+                </div>
+            </div>
+
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Actor</th>
+                                <th>Action</th>
+                                <th>Entity</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                                <tr>
+                                    <td class="text-nowrap small text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ log.actor.full_name if log.actor else 'System' }}</div>
+                                        <div class="small text-muted">{{ log.actor.role if log.actor else 'automated' }}</div>
+                                    </td>
+                                    <td><span class="badge font-monospace" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary);">{{ log.action }}</span></td>
+                                    <td><span class="badge-pill-soft">{{ log.entity_type|upper }} #{{ log.entity_id or '-' }}</span></td>
+                                    <td><div class="small text-secondary">{{ log.details }}</div></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        No audit entries recorded yet.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

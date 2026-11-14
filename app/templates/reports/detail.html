@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.item_name }} ({{ item.report_code }}) – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color: var(--brand-primary);">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}" style="color: var(--brand-primary);">Catalog</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index', tab=item_type) }}" style="color: var(--brand-primary);">{{ item_type|title }} Items</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">{{ item.report_code }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header Banner -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge-status {{ 'badge-lost' if item_type == 'lost' else 'badge-found' }} d-inline-block position-static">
+                    {{ item_type|upper }}
+                </span>
+                <span class="badge-pill-soft">{{ item.category.category_name if item.category else 'General' }}</span>
+                <span class="badge" style="background-color: var(--brand-primary-light); color: var(--brand-primary); font-weight: 600;">Status: {{ item.report_status|title }}</span>
+                {% if is_owner or is_admin %}
+                    <span class="badge" style="background-color: var(--highlight-light); color: var(--brand-secondary); font-weight: 600;">Review: {{ item.review_status|replace('_', ' ')|title }}</span>
+                {% endif %}
+            </div>
+            <h2 class="fw-bold mb-1" style="color: var(--brand-secondary);">{{ item.item_name }}</h2>
+            <div class="small text-muted">
+                Reported by: <strong>USER-{{ "%04d"|format(item.user_id) }}</strong> • Code: <strong>{{ item.report_code }}</strong>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            {% if is_owner or is_admin %}
+                <a href="{{ url_for('reports.edit_lost' if item_type == 'lost' else 'reports.edit_found', id=item.id) }}" class="btn btn-outline-warm btn-sm px-3">
+                    <i class="bi bi-pencil me-1"></i> Edit Report
+                </a>
+            {% endif %}
+
+            {% if item_type == 'found' and item.report_status == 'active' %}
+                {% if current_user.is_authenticated and current_user.id != item.user_id %}
+                    {% if existing_claim %}
+                        <a href="{{ url_for('claims.view_claim', id=existing_claim.id) }}" class="btn btn-outline-sage btn-sm px-3">
+                            <i class="bi bi-shield-check me-1"></i> View Your Claim ({{ existing_claim.claim_code }})
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('claims.submit', found_report_id=item.id) }}" class="btn btn-sage px-4">
+                            <i class="bi bi-shield-check me-1"></i> Claim This Item
+                        </a>
+                    {% endif %}
+                {% elif not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-sage px-4">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In to Claim
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Item Content -->
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <h5 class="fw-bold mb-3" style="color: var(--brand-secondary);">Item Description</h5>
+                <p class="leading-relaxed mb-4" style="color: var(--text-primary); white-space: pre-line;">{{ item.description }}</p>
+
+                <!-- Photo Gallery / Preview -->
+                {% if item.image_path %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted small text-uppercase mb-2">Item Photograph</h6>
+                        <div class="rounded-2 border overflow-hidden" style="max-height: 450px; background-color: var(--bg-tertiary); border-color: var(--border-color);">
+                            <img src="{{ url_for('static', filename=item.image_path) }}" alt="{{ item.item_name }}" class="img-fluid w-100 object-fit-contain" style="max-height: 450px;">
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Sensitive Details (Restricted to Owner & Admin) -->
+                {% if is_owner or is_admin %}
+                    <div class="p-3 rounded-2 border mb-3" style="background-color: var(--accent-light); border-color: rgba(217, 140, 104, 0.3);">
+                        <div class="d-flex align-items-center gap-2 mb-2 fw-bold small" style="color: var(--accent);">
+                            <i class="bi bi-shield-lock"></i> Confidential Characteristics (Hidden From Public)
+                        </div>
+                        <p class="small text-muted mb-0">
+                            {{ item.identifying_features or 'No private identifying features entered.' }}
+                        </p>
+                    </div>
+
+                    {% if is_admin %}
+                        <div class="p-3 rounded-2 border small" style="background-color: var(--highlight-light); border-color: rgba(233, 196, 106, 0.4);">
+                            <strong style="color: var(--brand-secondary);"><i class="bi bi-person-badge me-1"></i> Admin Reporter Details:</strong><br/>
+                            <span><strong>Name:</strong> {{ item.reporter.full_name if item_type == 'lost' else item.finder.full_name }}</span> | 
+                            <span><strong>Email:</strong> {{ item.reporter.email if item_type == 'lost' else item.finder.email }}</span> | 
+                            <span><strong>ID:</strong> {{ item.reporter.institutional_id if item_type == 'lost' else item.finder.institutional_id }}</span>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Potential Matches Section -->
+            {% if matches %}
+                <div class="card p-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0" style="color: var(--brand-secondary);"><i class="bi bi-cpu me-2" style="color: var(--brand-primary);"></i> Compatible Matches ({{ matches|length }})</h5>
+                        <span class="small text-muted">Python AI Engine</span>
+                    </div>
+
+                    <div class="row g-3">
+                        {% for m in matches %}
+                            <div class="col-12">
+                                <div class="p-3 rounded-2 border d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="match-score-pill {{ 'match-high' if m.match_score >= 80 else 'match-medium' if m.match_score >= 50 else 'match-low' }}">{{ m.match_score }}% Match</span>
+                                            <span class="fw-bold" style="color: var(--brand-secondary);">{{ m.found_report.item_name if item_type == 'lost' else m.lost_report.item_name }}</span>
+                                            <span class="text-muted small">({{ m.found_report.report_code if item_type == 'lost' else m.lost_report.report_code }})</span>
+                                        </div>
+                                        <p class="small text-muted mb-0">{{ m.match_explanation }}</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('reports.view_found' if item_type == 'lost' else 'reports.view_lost', id=m.found_report_id if item_type == 'lost' else m.lost_report_id) }}" class="btn btn-outline-slate btn-sm text-nowrap">
+                                            Inspect Item
+                                        </a>
+                                        {% if item_type == 'lost' %}
+                                            <a href="{{ url_for('claims.submit', found_report_id=m.found_report_id) }}" class="btn btn-sage btn-sm text-nowrap">
+                                                Claim Item
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Attributes -->
+        <div class="col-lg-4">
+            <div class="card p-4 mb-4 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <h6 class="fw-bold mb-3" style="color: var(--brand-secondary);">Item Specifications</h6>
+
+                <ul class="list-unstyled d-flex flex-column gap-3 small mb-0">
+                    <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted"><i class="bi bi-tag me-1"></i> Category</span>
+                        <span class="fw-semibold text-dark">{{ item.category.category_name if item.category else 'General' }}</span>
+                    </li>
+
+                    <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted"><i class="bi bi-building me-1"></i> Brand / Model</span>
+                        <span class="fw-semibold text-dark">{{ item.brand or 'Not Specified' }}</span>
+                    </li>
+
+                    <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted"><i class="bi bi-palette me-1"></i> Primary Color</span>
+                        <span class="fw-semibold text-dark">{{ item.primary_color }}</span>
+                    </li>
+
+                    {% if item.secondary_color %}
+                        <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                            <span class="text-muted"><i class="bi bi-palette2 me-1"></i> Secondary Color</span>
+                            <span class="fw-semibold text-dark">{{ item.secondary_color }}</span>
+                        </li>
+                    {% endif %}
+
+                    <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted"><i class="bi bi-calendar-event me-1"></i> Date {{ 'Lost' if item_type == 'lost' else 'Found' }}</span>
+                        <span class="fw-semibold text-dark">{{ item.date_lost if item_type == 'lost' else item.date_found }}</span>
+                    </li>
+
+                    {% if item.approximate_time %}
+                        <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                            <span class="text-muted"><i class="bi bi-clock me-1"></i> Approximate Time</span>
+                            <span class="fw-semibold text-dark">{{ item.approximate_time }}</span>
+                        </li>
+                    {% endif %}
+
+                    <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <span class="text-muted"><i class="bi bi-geo-alt me-1"></i> Campus Location</span>
+                        <span class="fw-semibold text-dark text-end">{{ item.location.location_name if item.location else 'Campus Grounds' }}</span>
+                    </li>
+
+                    {% if item_type == 'found' %}
+                        <li class="d-flex justify-content-between pb-2 border-bottom" style="border-color: var(--border-subtle) !important;">
+                            <span class="text-muted"><i class="bi bi-box me-1"></i> Custody Status</span>
+                            <span class="badge" style="background-color: var(--brand-secondary-light); color: var(--brand-secondary);">{{ item.custody_status|replace('_', ' ')|title }}</span>
+                        </li>
+                    {% endif %}
+
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted"><i class="bi bi-clock-history me-1"></i> Report Logged</span>
+                        <span class="text-muted">{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Ownership Recovery Safeguards Box -->
+            <div class="card p-4 border" style="background-color: var(--bg-primary); border-color: var(--border-color); border-radius: var(--radius-lg);">
+                <h6 class="fw-bold mb-2" style="color: var(--brand-secondary);"><i class="bi bi-shield-check me-1" style="color: var(--brand-primary);"></i> Campus Verification Policy</h6>
+                <p class="small text-muted mb-0">
+                    To prevent fraudulent claims, exact identifying markings (e.g. serial numbers, inner pocket contents, lockscreen pictures) are kept strictly confidential. When filing a claim, claimants must answer specific ownership verification questions.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

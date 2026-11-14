@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Smart AI Matches – Admin Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="row g-4">
+        <div class="col-lg-2 col-md-3">
+            {% include "admin/sidebar.html" %}
+        </div>
+
+        <div class="col-lg-10 col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="editorial-eyebrow mb-1">Computational Matching</div>
+                    <h3 class="fw-bold mb-0" style="color: var(--brand-secondary);">Intelligent Item Matching Engine</h3>
+                    <p class="text-muted small mb-0">Multi-attribute weighted similarity calculations across active reports</p>
+                </div>
+                <form method="POST" action="{{ url_for('admin.trigger_matching') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-sage btn-sm">
+                        <i class="bi bi-arrow-repeat me-1"></i> Re-Run Matching Engine
+                    </button>
+                </form>
+            </div>
+
+            <!-- Algorithm Metrics Summary -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-slate">
+                        <div class="stat-header">
+                            <span class="stat-label">Total Matches</span>
+                            <div class="stat-icon"><i class="bi bi-cpu"></i></div>
+                        </div>
+                        <div class="stat-number">{{ matches|length }}</div>
+                        <p class="stat-desc">Pairs calculated</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-sage">
+                        <div class="stat-header">
+                            <span class="stat-label">Strong (≥ 85%)</span>
+                            <div class="stat-icon"><i class="bi bi-stars"></i></div>
+                        </div>
+                        <div class="stat-number">{{ matches|selectattr('match_score', 'ge', 85)|list|length }}</div>
+                        <p class="stat-desc">High probability</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-terracotta">
+                        <div class="stat-header">
+                            <span class="stat-label">Moderate (65–84%)</span>
+                            <div class="stat-icon"><i class="bi bi-search"></i></div>
+                        </div>
+                        <div class="stat-number">{{ matches|selectattr('match_score', 'ge', 65)|selectattr('match_score', 'lt', 85)|list|length }}</div>
+                        <p class="stat-desc">Possible correlation</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card stat-mustard">
+                        <div class="stat-header">
+                            <span class="stat-label">Engine Architecture</span>
+                            <div class="stat-icon"><i class="bi bi-gear"></i></div>
+                        </div>
+                        <div class="fs-5 fw-bold mt-2" style="color: var(--brand-secondary);">scikit-learn TF-IDF</div>
+                        <p class="stat-desc">Weighted Cosine</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matches Table -->
+            <div class="card border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-subtle);">
+                <div class="table-responsive">
+                    <table class="table table-campus mb-0">
+                        <thead>
+                            <tr>
+                                <th>Match Score</th>
+                                <th>Lost Belonging</th>
+                                <th>Found Belonging</th>
+                                <th>Algorithmic Explanation</th>
+                                <th>Version</th>
+                                <th>Computed</th>
+                                <th class="text-end">Inspect</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in matches %}
+                                <tr>
+                                    <td>
+                                        <span class="match-score-pill {{ 'match-high' if m.match_score >= 80 else 'match-medium' if m.match_score >= 50 else 'match-low' }}">
+                                            {{ m.match_score }}% • {{ m.classification }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ m.lost_report.item_name }}</div>
+                                        <div class="small text-muted">{{ m.lost_report.report_code }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ m.found_report.item_name }}</div>
+                                        <div class="small text-muted">{{ m.found_report.report_code }}</div>
+                                    </td>
+                                    <td style="max-width: 320px;">
+                                        <div class="small text-secondary">{{ m.match_explanation }}</div>
+                                    </td>
+                                    <td><code>{{ m.algorithm_version }}</code></td>
+                                    <td><small class="text-muted">{{ m.created_at.strftime('%Y-%m-%d') }}</small></td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ url_for('reports.view_lost', id=m.lost_report_id) }}" class="btn btn-sm btn-outline-terracotta me-1" title="View Lost Report">Lost</a>
+                                        <a href="{{ url_for('reports.view_found', id=m.found_report_id) }}" class="btn btn-sm btn-outline-sage" title="View Found Report">Found</a>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        No item matches computed yet. Click "Re-Run Matching Engine" above to analyze approved records.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

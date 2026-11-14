@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Verify University Email – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card p-4 p-md-5 border text-center" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="d-inline-flex align-items-center justify-content-center mx-auto mb-3 rounded-circle" style="width: 64px; height: 64px; background-color: var(--brand-primary-light); color: var(--brand-primary); border: 1px solid rgba(79, 124, 114, 0.2);">
+                    <i class="bi bi-envelope-check fs-2"></i>
+                </div>
+
+                <h3 class="fw-bold mb-2" style="color: var(--brand-secondary);">Check Your University Inbox</h3>
+                <p class="text-muted mb-4">
+                    We sent a secure verification link to <strong>{{ email }}</strong>. Please click the link inside that email to activate your account and access reporting and claims.
+                </p>
+
+                {% if token %}
+                    <!-- Development Mode Quick Link Helper -->
+                    <div class="p-3 border rounded-2 text-start small mb-4" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                        <div class="fw-bold mb-1" style="color: var(--brand-secondary);"><i class="bi bi-code-slash me-1" style="color: var(--brand-primary);"></i> Local Development Link (Simulated Delivery):</div>
+                        <p class="text-muted mb-2">For local evaluation without an SMTP server configured, you can click directly:</p>
+                        <a href="{{ url_for('auth.verify_email', token=token) }}" class="btn btn-sm btn-outline-sage">
+                            <i class="bi bi-check-circle me-1"></i> Verify Email Now (Dev Mode)
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-sage px-4">
+                        Proceed to Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

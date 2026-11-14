@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Log In – CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
+            <div class="card p-4 p-md-5 border" style="background-color: var(--card-bg); border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded-2" style="width: 48px; height: 48px; background-color: var(--brand-primary-light); color: var(--brand-primary); border: 1px solid rgba(79, 124, 114, 0.2);">
+                        <i class="bi bi-shield-lock fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1" style="color: var(--brand-secondary);">Welcome Back</h3>
+                    <p class="text-muted small">Sign in to your university CampusConnect account</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">University Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="e.g. jsmith@campusconnect.edu" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="password" class="form-label mb-0">Password</label>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="small" style="color: var(--brand-primary);">Forgot password?</a>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                            <button class="btn btn-outline-warm" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" value="1">
+                        <label class="form-check-label small text-muted" for="remember_me">Remember my login for 7 days</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-sage w-100 py-2 mb-3">
+                        Sign In <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </form>
+
+                <div class="text-center pt-3 border-top" style="border-color: var(--border-color) !important;">
+                    <span class="small text-muted">Don't have an account? </span>
+                    <a href="{{ url_for('auth.register') }}" class="small fw-semibold" style="color: var(--brand-primary);">Register with campus email</a>
+                </div>
+
+                <div class="mt-4 p-3 rounded-2 border small" style="background-color: var(--bg-primary); border-color: var(--border-color);">
+                    <div class="fw-bold mb-1" style="color: var(--brand-secondary);"><i class="bi bi-info-circle me-1" style="color: var(--brand-primary);"></i> Quick Demo Credentials:</div>
+                    <div class="text-muted"><strong>Admin:</strong> admin1@campusconnect.edu | <code>CampusPass2026!</code></div>
+                    <div class="text-muted"><strong>Student:</strong> alex.rivers@student.campusconnect.edu | <code>CampusPass2026!</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        if (toggleBtn && passwordInput) {
+            toggleBtn.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                toggleBtn.querySelector('i').classList.toggle('bi-eye');
+                toggleBtn.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+        }
+    });
+</script>
+{% endblock %}
